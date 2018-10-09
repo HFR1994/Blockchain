@@ -15,12 +15,13 @@ var path = require('path');
 var util = require('util');
 var os = require('os');
 
+const connectionProfile = require("./connectionProfile");
 
-const url = "n8580c372acfb4d97a6f05844b8905b0f-org1-ca.us03.blockchain.ibm.com:31011";
-const id = "admin";
-const secret = "9c8cb2aaa6";
-const caName = "org1CA";
-const mSpid = "org1";
+const url = connectionProfile.certificateAuthorities["org3-ca"].url.substring(8,1000);
+const id = connectionProfile.certificateAuthorities["org3-ca"].registrar[0].enrollId;
+const secret = connectionProfile.certificateAuthorities["org3-ca"].registrar[0].enrollSecret;
+const caName = connectionProfile.certificateAuthorities["org3-ca"].caName;
+const mSpid = connectionProfile.certificateAuthorities["org3-ca"]["x-mspid"];
 
 //
 var fabric_client = new Fabric_Client();
@@ -51,6 +52,11 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
     // first check to see if the admin is already enrolled
     return fabric_client.getUserContext(id, true);
 }).then((user_from_store) => {
+
+
+    // at this point we should have the admin user
+    // first need to register the user with the CA server
+
     if (user_from_store && user_from_store.isEnrolled()) {
         console.log('Successfully loaded admin from persistence');
         admin_user = user_from_store;

@@ -17,14 +17,14 @@ var os = require('os');
 
 const connectionProfile = require("./connectionProfile");
 
-const url = connectionProfile.certificateAuthorities["org3-ca"].url.substring(8,1000);
-const id = connectionProfile.certificateAuthorities["org3-ca"].registrar[0].enrollId;
-const secret = connectionProfile.certificateAuthorities["org3-ca"].registrar[0].enrollSecret;
-const caName = connectionProfile.certificateAuthorities["org3-ca"].caName;
-const mSpid = connectionProfile.certificateAuthorities["org3-ca"]["x-mspid"];
+const url = connectionProfile.certificateAuthorities["org1-ca"].url.substring(8,1000);
+const id = connectionProfile.certificateAuthorities["org1-ca"].registrar[0].enrollId;
+const secret = connectionProfile.certificateAuthorities["org1-ca"].registrar[0].enrollSecret;
+const caName = connectionProfile.certificateAuthorities["org1-ca"].caName;
+const mSpid = connectionProfile.certificateAuthorities["org1-ca"]["x-mspid"];
 
-const user = "frhectoin";
-const password = "hcfr1994";
+const user = "user5";
+const secreto = "gMkRpqBPSTOd";
 const affiliation = "org1.department2";
 
 //
@@ -64,26 +64,51 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 
     // at this point we should have the admin user
     // first need to register the user with the CA server
-    return fabric_ca_client.register({enrollmentID: user, enrollmentSecret: password, affiliation: affiliation, role: 'client'}, admin_user);
-}).then((secret) => {
-    // next we need to enroll the user with CA server
-    console.log(`Successfully registered ${user} - secret:`+ secret);
+    return fabric_ca_client.revoke({enrollmentID: user, reason: 0}, admin_user);
+}).then((revoke) => {
+    if(revoke.success) {
+        return fabric_ca_client.newIdentityService().update(user, { affiliation: affiliation,
+            attrs: [
+                {
+                    "name": "hf.Registrar.Roles",
+                    "value": "client,user,peer"
+                },
+                {
+                    "name": "hf.Registrar.DelegateRoles",
+                    "value": "client,user,peer"
+                },
+                {
+                    "name": "hf.Revoker",
+                    "value": "1"
+                },
+                {
+                    "name": "hf.GenCRL",
+                    "value": "1"
+                },
+                {
+                    "name": "hf.Registrar.Attributes",
+                    "value": "*"
+                },
+                {
+                    "name": "hf.AffiliationMgr",
+                    "value": "1"
+                }
+            ] },admin_user)
+    }else{
+        console.error('Could not revoke user');
+    }
+}).then((response) => {
 
-    return fabric_ca_client.enroll({enrollmentID: user, enrollmentSecret: secret});
-}).then((enrollment) => {
-  console.log(`Successfully enrolled member user "${user}" `);
-  return fabric_client.createUser(
-     {username: user,
-     mspid: mSpid,
-     cryptoContent: { privateKeyPEM: enrollment.key.toBytes(), signedCertPEM: enrollment.certificate }
-     });
-}).then((user) => {
-     member_user = user;
+    console.log(response.success);
 
-     return fabric_client.setUserContext(member_user);
-}).then(()=>{
-     console.log('User1 was successfully registered and enrolled and is ready to intreact with the fabric network');
+    if(response.success){
+        return fabric_ca_client.newIdentityService().delete(response.result.id,admin_user)
+    }
 
+}).then((response) => {
+
+    let c = 5;
+    console.log(response)
 }).catch((err) => {
     console.error('Failed to register: ' + err);
 	if(err.toString().indexOf('Authorization') > -1) {
