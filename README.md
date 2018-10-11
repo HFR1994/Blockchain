@@ -42,14 +42,18 @@ Configurar la transacción a realizar
 ## Uso
 ```
 $ git clone https://github.com/HFR1994/Blockchain.git
-$ . foobar/bin/activate
-$ pip install -e .
+$ node enrollAdmin.js
+$ node registerUser.js
+$ node invoke.js
 ```
 
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Aquí cambiamos transaction.js a un método de query
 
-Please make sure to update tests as appropriate.
+`$ node query.js`
 
-## License
+## Contribucción
+
+Material distribuido con el permiso de IBM. El contenido creativo y licencia son de su propiedad.
+
+## Licencia
 [MIT](https://choosealicense.com/licenses/mit/)
