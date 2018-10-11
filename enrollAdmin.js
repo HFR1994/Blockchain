@@ -17,11 +17,11 @@ var os = require('os');
 
 const connectionProfile = require("./connectionProfile");
 
-const url = connectionProfile.certificateAuthorities["org3-ca"].url.substring(8,1000);
-const id = connectionProfile.certificateAuthorities["org3-ca"].registrar[0].enrollId;
-const secret = connectionProfile.certificateAuthorities["org3-ca"].registrar[0].enrollSecret;
-const caName = connectionProfile.certificateAuthorities["org3-ca"].caName;
-const mSpid = connectionProfile.certificateAuthorities["org3-ca"]["x-mspid"];
+const url = connectionProfile.certificateAuthorities[connectionProfile.client.organization].url.substring(8,1000);
+const id = connectionProfile.certificateAuthorities[connectionProfile.client.organization].registrar[0].enrollId;
+const secret = connectionProfile.certificateAuthorities[connectionProfile.client.organization].registrar[0].enrollSecret;
+const caName = connectionProfile.certificateAuthorities[connectionProfile.client.organization].caName;
+const mSpid = connectionProfile.certificateAuthorities[connectionProfile.client.organization]["x-mspid"];
 
 //
 var fabric_client = new Fabric_Client();
@@ -29,7 +29,7 @@ var fabric_ca_client = null;
 var admin_user = null;
 var member_user = null;
 var store_path = path.join(__dirname, 'hfc-key-store');
-console.log(' Store path:'+store_path);
+console.log('Voy a guardar todo en: '+store_path);
 
 // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
 Fabric_Client.newDefaultKeyValueStore({ path: store_path
@@ -58,7 +58,7 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
     // first need to register the user with the CA server
 
     if (user_from_store && user_from_store.isEnrolled()) {
-        console.log('Successfully loaded admin from persistence');
+        console.log('Logre cargar al administrador de persistencia');
         admin_user = user_from_store;
         return null;
     } else {
@@ -67,7 +67,7 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
           enrollmentID: id,
           enrollmentSecret: secret
         }).then((enrollment) => {
-          console.log('Successfully enrolled admin user "admin"');
+          console.log('Logre enrolar al usuario "admin"');
           return fabric_client.createUser(
               {
                   username: id,
@@ -78,12 +78,12 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
           admin_user = user;
           return fabric_client.setUserContext(admin_user);
         }).catch((err) => {
-          console.error('Failed to enroll and persist admin. Error: ' + err.stack ? err.stack : err);
-          throw new Error('Failed to enroll admin');
+          console.error('Falle en enrolar y persistir en usuario “admin”, Error: ' + err.stack ? err.stack : err);
+          throw new Error('La dirección es invalida');
         });
     }
 }).then(() => {
-    console.log('Assigned the admin user to the fabric client ::' + admin_user.toString());
+    console.log('Asigne a “admin” como un usuario de fabric-client:: ' + admin_user.toString());
 }).catch((err) => {
-    console.error('Failed to enroll admin: ' + err);
+    console.error('Falle en enrolar a “admin”: ' + err);
 });

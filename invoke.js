@@ -14,39 +14,31 @@ var util = require('util');
 var os = require('os');
 
 const connectionProfile = require("./connectionProfile");
+const config = require("./config");
+const tran = require("./transaction");
 
 //
 var fabric_client = new Fabric_Client();
-let peers=[], orderes=[];
+let peers=[];
+
+const user = config.usuario;
 
 // setup the fabric network
 
-const channel = fabric_client.newChannel("nuestrocanal");
+const channel = fabric_client.newChannel(tran.channelID);
 
-/*Object.entries(connectionProfile.peers).forEach(([key, value]) => {
-    const p =  fabric_client.newPeer(value.url, {pem: value.tlsCACerts.pem, 'ssl-target-name-override': null});
+tran.peers.forEach(function (peer) {
+    let p = fabric_client.newPeer(peer.url, {pem: peer.certificadoPem, 'ssl-target-name-override': null});
     peers.push(p);
     channel.addPeer(p);
 });
-Object.entries(connectionProfile.orderers).forEach(([key, value]) => {
-    const o = fabric_client.newOrderer(value.url, {pem: value.tlsCACerts.pem, 'ssl-target-name-override': null});
-    orderes.push(o);
-    channel.addOrderer(o);
-});*/
-
-const peer = fabric_client.newPeer(connectionProfile.peers["org3-peere335"].url, {pem: connectionProfile.peers["org3-peere335"].tlsCACerts.pem, 'ssl-target-name-override': null});
-channel.addPeer(peer);
-
-const peer1 = fabric_client.newPeer(connectionProfile.peers["org1-peer1"].url, {pem: connectionProfile.peers["org1-peer1"].tlsCACerts.pem, 'ssl-target-name-override': null});
-channel.addPeer(peer1);
 
 const o = fabric_client.newOrderer(connectionProfile.orderers.orderer.url, {pem: connectionProfile.orderers.orderer.tlsCACerts.pem, 'ssl-target-name-override': null});
 channel.addOrderer(o);
 
-
 var member_user = null;
 var store_path = path.join(__dirname, 'hfc-key-store');
-console.log('Store path:' + store_path);
+console.log('Voy a guardar todo en: '+store_path);
 var tx_id = null;
 
 // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
@@ -63,25 +55,25 @@ Fabric_Client.newDefaultKeyValueStore({
     fabric_client.setCryptoSuite(crypto_suite);
 
     // get the enrolled user from persistence, this user will sign all requests
-    return fabric_client.getUserContext('frhectoin', true);
+    return fabric_client.getUserContext(user, true);
 }).then((user_from_store) => {
     if (user_from_store && user_from_store.isEnrolled()) {
-        console.log('Successfully loaded frhectoin from persistence');
+        console.log(`Logre cargar al usuario ${user}  de persistencia`);
         member_user = user_from_store;
     } else {
-        throw new Error('Failed to get frhectoin.... run registerUser.js');
+        throw new Error(`Falle en enrolar a ${user} ... por favor corre “registerUser.js”`);
     }
 
     // get a transaction id object based on the current user assigned to fabric client
     tx_id = fabric_client.newTransactionID();
-    console.log('Assigning transaction_id: ', tx_id._transaction_id);
+    console.log('Asignando transaction_id: ', tx_id._transaction_id);
 
     // must send the proposal to endorsing peers
     var request = {
-        chaincodeId: 'Demo',
-        fcn: 'createCar',
-        args: ['CAR556','Dodge','Neon','Red','Hector'],
-        chainId: 'nuestrocanal',
+        chaincodeId: tran.chaincodeID,
+        fcn: tran.transaction,
+        args: tran.argumentos,
+        chainId: tran.channelID,
         txId: tx_id
     };
     // send the transaction proposal to the peers
@@ -93,13 +85,13 @@ Fabric_Client.newDefaultKeyValueStore({
     if (proposalResponses && proposalResponses[0].response &&
         proposalResponses[0].response.status === 200) {
         isProposalGood = true;
-        console.log('Transaction proposal was good');
+        console.log('La propuesta de transacción fue exitosa');
     } else {
         console.error(results);
     }
     if (isProposalGood) {
         console.log(util.format(
-            'Successfully sent Proposal and received ProposalResponse: Status - %s, message - "%s"',
+            'Mandé exitosamente la propuesta y recibí la ProposalResponse con estatus %s, y mensaje "%s"',
             proposalResponses[0].response.status, proposalResponses[0].response.message));
 
         // build up the request for the orderer to have the transaction committed
@@ -119,7 +111,7 @@ Fabric_Client.newDefaultKeyValueStore({
 
         // get an eventhub once the fabric client has a user assigned. The user
         // is required because the event registration must be signed
-        let event_hub = channel.newChannelEventHub(peer);
+        let event_hub = channel.newChannelEventHub(peers[0]);
 
         // using resolve the promise so that result status may be processed
         // under the then clause rather than having the catch clause process
@@ -138,15 +130,15 @@ Fabric_Client.newDefaultKeyValueStore({
                     // now let the application know what happened
                     var return_status = { event_status: code, tx_id: transaction_id_string };
                     if (code !== 'VALID') {
-                        console.error('The transaction was invalid, code = ' + code);
+                        console.error('La transacción es invalida, código: ' + code);
                         resolve(return_status); // we could use reject(new Error('Problem with the tranaction, event status ::'+code));
                     } else {
-                        console.log('The transaction has been committed on peer ' + event_hub.getPeerAddr());
+                        console.log('La transacción fue enviada al peer: ' + event_hub.getPeerAddr());
                         resolve(return_status);
                     }
                 }, (err) => {
                     //this is the callback if something goes wrong with the event registration or processing
-                    reject(new Error('There was a problem with the eventhub ::' + err));
+                    reject(new Error('Hay un problema con eventhub: ' + err));
                 },
                 { disconnect: true } //disconnect when complete
             );
@@ -157,23 +149,24 @@ Fabric_Client.newDefaultKeyValueStore({
 
         return Promise.all(promises);
     } else {
-        console.error('Failed to send Proposal or receive valid response. Response null or status is not 200. exiting...');
-        throw new Error('Failed to send Proposal or receive valid response. Response null or status is not 200. exiting...');
+        console.error('\n' +
+            'Fallé en enviar mi propuesta, recibí una respuesta invalida. La respuesta fue nula o no tiene un estatus 200. Saliendo…');
+        throw new Error('Fallé en enviar mi propuesta, recibí una respuesta invalida. La respuesta fue nula o no tiene un estatus 200. Saliendo…');
     }
 }).then((results) => {
-    console.log('Send transaction promise and event listener promise have completed');
+    console.log('El envió de la promesa de la transacción y el evento de callback se llamaron exitosamente');
     // check the results in the order the promises were added to the promise all list
     if (results && results[0] && results[0].status === 'SUCCESS') {
-        console.log('Successfully sent transaction to the orderer.');
+        console.log('La transacción fue enviada al orderer.');
     } else {
-        console.error('Failed to order the transaction. Error code: ' + results[0].status);
+        console.error('Falle en enviar la transacción al orderer. Error: ' + results[0].status);
     }
 
     if (results && results[1] && results[1].event_status === 'VALID') {
-        console.log('Successfully committed the change to the ledger by the peer');
+        console.log('La transacción fue anexada al Blockchain de peer');
     } else {
-        console.log('Transaction failed to be committed to the ledger due to ::' + results[1].event_status);
+        console.log('La transacción fallo al anexarse al Blockchain de peer. Error: ' + results[1].event_status);
     }
 }).catch((err) => {
-    console.error('Failed to invoke successfully :: ' + err);
+    console.error('Falle en invocar al Blockchain: ' + err);
 });

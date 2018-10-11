@@ -16,16 +16,18 @@ var util = require('util');
 var os = require('os');
 
 const connectionProfile = require("./connectionProfile");
+const config = require("./config");
 
-const url = connectionProfile.certificateAuthorities["org3-ca"].url.substring(8,1000);
-const id = connectionProfile.certificateAuthorities["org3-ca"].registrar[0].enrollId;
-const secret = connectionProfile.certificateAuthorities["org3-ca"].registrar[0].enrollSecret;
-const caName = connectionProfile.certificateAuthorities["org3-ca"].caName;
-const mSpid = connectionProfile.certificateAuthorities["org3-ca"]["x-mspid"];
+const url = connectionProfile.certificateAuthorities[connectionProfile.client.organization].url.substring(8,1000);
+const id = connectionProfile.certificateAuthorities[connectionProfile.client.organization].registrar[0].enrollId;
+const secret = connectionProfile.certificateAuthorities[connectionProfile.client.organization].registrar[0].enrollSecret;
+const caName = connectionProfile.certificateAuthorities[connectionProfile.client.organization].caName;
+const mSpid = connectionProfile.certificateAuthorities[connectionProfile.client.organization]["x-mspid"];
 
-const user = "frhectoin";
-const password = "hcfr1994";
-const affiliation = "org1.department2";
+
+const user = config.usuario;
+const password = config.password;
+const affiliation = config.afiliacion;
 
 //
 var fabric_client = new Fabric_Client();
@@ -33,7 +35,7 @@ var fabric_ca_client = null;
 var admin_user = null;
 var member_user = null;
 var store_path = path.join(__dirname, 'hfc-key-store');
-console.log(' Store path:'+store_path);
+console.log('Voy a guardar todo en: '+store_path);
 
 // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
 Fabric_Client.newDefaultKeyValueStore({ path: store_path
@@ -56,10 +58,10 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
     return fabric_client.getUserContext(id, true);
 }).then((user_from_store) => {
     if (user_from_store && user_from_store.isEnrolled()) {
-        console.log('Successfully loaded admin from persistence');
+        console.log('Logre cargar al administrador de persistencia');
         admin_user = user_from_store;
     } else {
-        throw new Error('Failed to get admin.... run enrollAdmin.js');
+        throw new Error('Falle en enrolar a “admin” ... por favor corre “enrollAdmin.js”');
     }
 
     // at this point we should have the admin user
@@ -67,11 +69,11 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
     return fabric_ca_client.register({enrollmentID: user, enrollmentSecret: password, affiliation: affiliation, role: 'client'}, admin_user);
 }).then((secret) => {
     // next we need to enroll the user with CA server
-    console.log(`Successfully registered ${user} - secret:`+ secret);
+    console.log(`Logre asignar ${user} - password: `+ secret);
 
     return fabric_ca_client.enroll({enrollmentID: user, enrollmentSecret: secret});
 }).then((enrollment) => {
-  console.log(`Successfully enrolled member user "${user}" `);
+  console.log(`Logre enrolar al usuario "${user}"`);
   return fabric_client.createUser(
      {username: user,
      mspid: mSpid,
@@ -82,12 +84,11 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 
      return fabric_client.setUserContext(member_user);
 }).then(()=>{
-     console.log('User1 was successfully registered and enrolled and is ready to intreact with the fabric network');
+     console.log(`El usuario "${user}" se logró enrolar y está listo para interactuar con el Blockchain`);
 
 }).catch((err) => {
-    console.error('Failed to register: ' + err);
+    console.error('Falle en registrar: ' + err);
 	if(err.toString().indexOf('Authorization') > -1) {
-		console.error('Authorization failures may be caused by having admin credentials from a previous CA instance.\n' +
-		'Try again after deleting the contents of the store directory '+store_path);
+		console.error('Los fallos de autorización pueden ser causados ​​por tener credenciales de administrador de una instancia de CA anterior. Inténtalo de nuevo después de eliminar el contenido del directorio '+store_path);
 	}
 });

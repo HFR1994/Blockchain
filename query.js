@@ -13,19 +13,29 @@ var path = require('path');
 var util = require('util');
 var os = require('os');
 const connectionProfile = require("./connectionProfile");
+const config = require("./config");
+const tran = require("./transaction");
 
 //
 var fabric_client = new Fabric_Client();
+let peers=[];
 
 // setup the fabric network
-var channel = fabric_client.newChannel('nuestrocanal');
-var peer = fabric_client.newPeer(connectionProfile.peers["org3-peere335"].url, {pem: connectionProfile.peers["org3-peere335"].tlsCACerts.pem, 'ssl-target-name-override': null});
-channel.addPeer(peer);
+
+const channel = fabric_client.newChannel(tran.channelID);
+
+tran.peers.forEach(function (peer) {
+    let p = fabric_client.newPeer(peer.url, {pem: peer.certificadoPem, 'ssl-target-name-override': null});
+    peers.push(p);
+    channel.addPeer(p);
+});
+
+const user = config.usuario;
 
 //
 var member_user = null;
 var store_path = path.join(__dirname, 'hfc-key-store');
-console.log('Store path:'+store_path);
+console.log('Voy a guardar todo en: '+store_path);
 var tx_id = null;
 
 // create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
@@ -41,38 +51,38 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 	fabric_client.setCryptoSuite(crypto_suite);
 
 	// get the enrolled user from persistence, this user will sign all requests
-	return fabric_client.getUserContext('frhectoin', true);
+	return fabric_client.getUserContext(user, true);
 }).then((user_from_store) => {
 	if (user_from_store && user_from_store.isEnrolled()) {
-		console.log('Successfully loaded user1 from persistence');
+        console.log(`Logre cargar al usuario ${user} de persistencia`);
 		member_user = user_from_store;
 	} else {
-		throw new Error('Failed to get user1.... run registerUser.js');
+        throw new Error(`Falle en enrolar a ${user} ... por favor corre “registerUser.js”`);
 	}
 
 	// queryCar chaincode function - requires 1 argument, ex: args: ['CAR4'],
 	// queryAllCars chaincode function - requires no arguments , ex: args: [''],
 	const request = {
 		//targets : --- letting this default to the peers assigned to the channel
-		chaincodeId: 'Demo',
-		fcn: 'queryCar',
-		args: ['CAR555']
+		chaincodeId: tran.chaincodeID,
+		fcn: tran.transaction,
+		args: tran.argumentos
 	};
 
 	// send the query proposal to the peer
 	return channel.queryByChaincode(request);
 }).then((query_responses) => {
-	console.log("Query has completed, checking results");
+	console.log("La consulta se completó exitosamente, checando resultados…");
 	// query_responses could have more than one  results if there multiple peers were used as targets
 	if (query_responses && query_responses.length == 1) {
 		if (query_responses[0] instanceof Error) {
-			console.error("error from query = ", query_responses[0]);
+			console.error("Error en la consulta: ", query_responses[0]);
 		} else {
-			console.log("Response is ", query_responses[0].toString());
+			console.log("La respuesta es: ", query_responses[0].toString());
 		}
 	} else {
-		console.log("No payloads were returned from query");
+		console.log("La consulta se realizo exitosamente, pero no hubo resultados…");
 	}
 }).catch((err) => {
-	console.error('Failed to query successfully :: ' + err);
+	console.error('Falle en hacer la consulta. Error: ' + err);
 });
