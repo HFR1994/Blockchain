@@ -1,12 +1,12 @@
 const connectionProfile = require("./connectionProfile");
 
 module.exports = {
-    chaincodeID: "Fabcar",
-    channelID: "defaultchannel",
+    chaincodeID: "",
+    channelID: "",
     peers: [
-        {url: connectionProfile.peers["org1-peer1"].url, certificadoPem: connectionProfile.peers["org1-peer1"].tlsCACerts.pem},
-        {url: connectionProfile.peers["org2-peer1"].url, certificadoPem: connectionProfile.peers["org2-peer1"].tlsCACerts.pem},
+        {url: "", certificadoPem: ""},
+        {url: "", certificadoPem: ""},
     ],
-    transaction: "initLedger",
-    argumentos:[] // Se queda vacío
+    transaction: "",
+    argumentos:[]
 };
