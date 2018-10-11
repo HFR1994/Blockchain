@@ -23,9 +23,21 @@ Se tienen que hacer tres pasos.
 
 Paso 1:
 
-Agregar los parametros de conexión
+Agregar los parámetros de conexión
 
 ![](videos/connectionProfile.gif)
+
+Paso 2:
+
+Configurar tus credenciales a crear
+
+![](videos/config.gif)
+
+Paso 3:
+
+Configurar la transacción a realizar
+
+![](videos/trans.gif)
 
 ## Uso
 ```
