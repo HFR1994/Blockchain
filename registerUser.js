@@ -18,11 +18,13 @@ var os = require('os');
 const connectionProfile = require("./connectionProfile");
 const config = require("./config");
 
-const url = connectionProfile.certificateAuthorities[connectionProfile.client.organization].url.substring(8,1000);
-const id = connectionProfile.certificateAuthorities[connectionProfile.client.organization].registrar[0].enrollId;
-const secret = connectionProfile.certificateAuthorities[connectionProfile.client.organization].registrar[0].enrollSecret;
-const caName = connectionProfile.certificateAuthorities[connectionProfile.client.organization].caName;
-const mSpid = connectionProfile.certificateAuthorities[connectionProfile.client.organization]["x-mspid"];
+const org = Object.keys(connectionProfile.certificateAuthorities)[0];
+
+const url = connectionProfile.certificateAuthorities[org].url.substring(8,1000);
+const id = connectionProfile.certificateAuthorities[org].registrar[0].enrollId;
+const secret = connectionProfile.certificateAuthorities[org].registrar[0].enrollSecret;
+const caName = connectionProfile.certificateAuthorities[org].caName;
+const mSpid = connectionProfile.certificateAuthorities[org]["x-mspid"];
 
 
 const user = config.usuario;

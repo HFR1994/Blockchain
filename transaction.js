@@ -1,6 +1,6 @@
 const connectionProfile = require("./connectionProfile");
 
-export default {
+module.exports = {
     chaincodeID: "Fabcar",
     channelID: "defaultchannel",
     peers: [
@@ -9,4 +9,4 @@ export default {
     ],
     transaction: "initLedger",
     argumentos:[] // Se queda vacío
-}
+};
