@@ -4,8 +4,7 @@ module.exports = {
     chaincodeID: "",
     channelID: "",
     peers: [
-        {url: "", certificadoPem: ""},
-        {url: "", certificadoPem: ""},
+        {url: "", certificadoPem: ""}
     ],
     transaction: "",
     argumentos:[]
