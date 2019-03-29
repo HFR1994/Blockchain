@@ -1,0 +1,9 @@
+{
+  "basic.version": "Version",
+  "basic.usage": "Usage: $0 [options]",
+  "menu.help": "Show help",
+  "menu.version": "Show version number"
+
+
+
+}
