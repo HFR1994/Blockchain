@@ -1,0 +1,77 @@
+{
+  "name": "deviceid",
+  "version": "1.0.0",
+  "client": {
+    "organization": "ISBP04391007",
+    "connection": {
+      "timeout": {
+        "peer": {
+          "endorser": "300"
+        },
+        "orderer": "300"
+      }
+    }
+  },
+  "channels": {
+    "scd-deviceid": {
+      "orderers": [
+        "orderer1"
+      ],
+      "peers": {
+        "peer1": {},
+        "peer2": {}
+      },
+      "chaincodes": [
+        "fabcar:1.0"
+      ]
+    }
+  },
+  "organizations": {
+    "ISPB04391007": {
+      "mspid": "ISPB04391007",
+      "peers": [
+        "peer1",
+        "peer2"
+      ],
+      "certificateAuthorities": [
+        "ca-svc"
+      ]
+    }
+  },
+  "orderers": {
+    "orderer": {
+      "url": "grpcs://orderer1:7050",
+      "tlsCACerts": {
+        "pem":"-----BEGIN CERTIFICATE-----\nMIICUjCCAfmgAwIBAgIQchqkHFgGn5cSN9WBQt6jHDAKBggqhkjOPQQDAjB0MQsw\nCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNU2FuIEZy\nYW5jaXNjbzEYMBYGA1UEChMPaGV4dC5zY2Qub3JnLmJyMR4wHAYDVQQDExV0bHNj\nYS5oZXh0LnNjZC5vcmcuYnIwHhcNMTkwNTE5MTgzNzAwWhcNMjkwNTE2MTgzNzAw\nWjB0MQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMN\nU2FuIEZyYW5jaXNjbzEYMBYGA1UEChMPaGV4dC5zY2Qub3JnLmJyMR4wHAYDVQQD\nExV0bHNjYS5oZXh0LnNjZC5vcmcuYnIwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNC\nAAQTahJokHz8iwTa6HWZu/6vePOr8f86iSakmi+bsn9fltkmH+UjzLsHUW+fb2zv\n7MQDdV6VfovveU7ztY+gL0Ivo20wazAOBgNVHQ8BAf8EBAMCAaYwHQYDVR0lBBYw\nFAYIKwYBBQUHAwIGCCsGAQUFBwMBMA8GA1UdEwEB/wQFMAMBAf8wKQYDVR0OBCIE\nIP927DfK/VBs1rC7U7zGg/EYVMu1icyGRrM3pzXWltNIMAoGCCqGSM49BAMCA0cA\nMEQCIGlngzCImm2aXJJM3250cvFzhGoFNIJMyr5mmyuwwdp6AiB1jX1tQirmrUFG\nlVvPO37foRMaQ7bWpbSCY9c0rAhHTg==\n-----END CERTIFICATE-----"
+      }
+    }
+  },
+  "peers": {
+    "peer1": {
+      "url": "grpcs://peer1:7051",
+      "tlsCACerts": {
+        "pem":"-----BEGIN CERTIFICATE-----\nMIICUjCCAfmgAwIBAgIQEb//gedPyqfbZdUsdtbKJDAKBggqhkjOPQQDAjB0MQsw\nCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNU2FuIEZy\nYW5jaXNjbzEYMBYGA1UEChMPaGV4dC5zY2Qub3JnLmJyMR4wHAYDVQQDExV0bHNj\nYS5oZXh0LnNjZC5vcmcuYnIwHhcNMTkwNTE5MTgzNzAwWhcNMjkwNTE2MTgzNzAw\nWjB0MQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMN\nU2FuIEZyYW5jaXNjbzEYMBYGA1UEChMPaGV4dC5zY2Qub3JnLmJyMR4wHAYDVQQD\nExV0bHNjYS5oZXh0LnNjZC5vcmcuYnIwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNC\nAAQC5bYs8zzRSRNLKaDdGrGZMGvGDWATnB3g9etcWF2AkaHubOMyAukqD5g390SU\nLMvx9jO82GtbOq0J2AHlhel6o20wazAOBgNVHQ8BAf8EBAMCAaYwHQYDVR0lBBYw\nFAYIKwYBBQUHAwIGCCsGAQUFBwMBMA8GA1UdEwEB/wQFMAMBAf8wKQYDVR0OBCIE\nIASnuDit2VEVKTcHnHQoZ22y0Q8X/oIwBmNl+Idm4iWhMAoGCCqGSM49BAMCA0cA\nMEQCIFYGtwRXfxdRVd+8SlMPOgU3ypOdjKFKZ5Y2cdbYrnANAiBagkx+apIfM6B6\nTvR9c3L1PVNAMzYBzPOxek3eoDfV0Q==\n-----END CERTIFICATE-----"
+      }
+    },
+    "peer2": {
+      "url": "grpcs://peer2:7051",
+      "tlsCACerts": {
+        "path":"/certifacates/Peer/Peer2/peer/tls/ca.crt"
+      }
+    }
+  },
+  "certificateAuthorities": {
+    "ca-svc": {
+      "url": "https://ca-svc:7054",
+      "registrar": [{
+        "enrollId": "admin",
+        "enrollSecret": "adminpw"
+      }],
+      "caName": "ca-svc",
+      "tlsCACerts": {
+        "path":"/certifacates/Peer/Peer1/msp/users/Admin@hext.scd.org.br/tls/ca.crt"
+      },
+      "x-mspid": "ISBP04391007"
+    }
+  }
+}
