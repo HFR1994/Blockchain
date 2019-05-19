@@ -68,7 +68,11 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 
     // at this point we should have the admin user
     // first need to register the user with the CA server
-    return fabric_ca_client.register({enrollmentID: user, enrollmentSecret: password, affiliation: affiliation, role: 'client'}, admin_user);
+    return fabric_ca_client.register({enrollmentID: user, enrollmentSecret: password, affiliation: affiliation, attrs: [{
+            name: "organization",
+            value: "cip_data",
+            ecert: true,
+        }], role: 'client'}, admin_user);
 }).then((secret) => {
     // next we need to enroll the user with CA server
     console.log(`Logre asignar ${user} - password: `+ secret);
