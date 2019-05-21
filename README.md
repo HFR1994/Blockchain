@@ -1,6 +1,6 @@
 # Crea tu propio Blockchain ![CI status](https://img.shields.io/badge/build-passing-brightgreen.svg)
 
-Este programa es un complemento a la siguiente [información](https://ibm-cloud-and-data-revolution-daring-dingo.mybluemix.net/)
+Este programa es un complemento a la siguiente [información](https://blockchain101-essentials.mybluemix.net/)
 
 ## Installation
 
