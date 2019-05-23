@@ -12,6 +12,7 @@
   "messages.save": "Se guardo la información en ",
   "messages.empty": "La información no puede estar vacia",
   "messages.nextTime": "La proxima vez se puede correr este programa sin argumentos",
+  "messages.loadData": "Credenciales cargadas desde memoria",
   "messages.timeout": "No se puede conectar con el Blockchain, por favor intenta otra vez mas tarde",
   "messages.generic": "Por favor especifica los valores de conexión [user, secret, network_id] o introduce una ruta valida [file]",
   "messages.retrieve": "Recuperando información de",
@@ -35,5 +36,8 @@
   "questions.channelID": "¿Dame el nombre del canal?",
   "questions.peers": "¿Esta lista de peers es correcta?",
   "questions.user": "¿Dame el nombre del usuario?",
-  "questions.password": "¿Dame el password?"
+  "questions.password": "¿Dame el password?",
+  "questions.username": "¿Dame el nombre del usuario",
+  "questions.affiliation": "¿Dame el nombre de la afiliación?",
+  "questions.company": "¿Dame el nombre de la compañia?"
 }

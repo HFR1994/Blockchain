@@ -47,7 +47,7 @@ export class ApiService {
         }).then((response) => {
             return response.data;
         }).catch(( err ) => {
-            throw new Error(err);
+            return (Promise.reject(this.normalizeError(err)));
         });
     }
 
@@ -76,7 +76,7 @@ export class ApiService {
         return({
             id: '-1',
             code: 'UnknownError',
-            message: 'An unexpected error occurred.'
+            message: error
         });
 
     }

@@ -25,8 +25,14 @@ const Main = class Main {
     private chaincode: string;
     private channelId: string;
     private cloudant: Object;
+    private username: string;
+    private user:boolean;
+    private trans: boolean;
 
     constructor() {
+        this.user=true;
+        this.trans=true;
+        this.username="";
         inquirer.registerPrompt("checkbox1", Checkbox);
         inquirer.registerPrompt("list1", List);
         this.showPeersList = this.showPeersList.bind(this);
@@ -124,7 +130,7 @@ const Main = class Main {
                         this.connectionProfile = e;
                         return this.askCloudantredentials();
                     }).then((cred) => {
-                        this.blockChainService = new BlockchainService(this.connectionProfile, cred);
+                        this.blockChainService = new BlockchainService(this.connectionProfile, cred, this.peers);
                         str = "Listo";
                         return true;
                     }).catch((err) => {
@@ -139,13 +145,13 @@ const Main = class Main {
                         try {
                             this.connectionProfile = JSON.parse(argv.f);
                             this.cloudant = cred;
-                            this.blockChainService = new BlockchainService(this.connectionProfile, cred);
+                            console.log(`\n${chalk.green("Listo")}\n`);
+                            this.blockChainService = new BlockchainService(this.connectionProfile, cred, this.peers);
                         } catch (e) {
                             if (e instanceof SyntaxError) {
                                 throw(new Error(Logger.ERROR(locale["messages.json.format"])))
                             }
                         }
-                        console.log(`\n${chalk.green("Listo")}\n`);
                         this.showMainMenu();
                         return true;
                     });
@@ -166,7 +172,7 @@ const Main = class Main {
             .argv;
     }
 
-    showPeersList(callback = null){
+    async showPeersList(callback = null){
 
         // @ts-ignore
         this.peerList = Object.keys(this.connectionProfile.peers).reduce((accumulator, key) => {
@@ -174,7 +180,7 @@ const Main = class Main {
             return [...accumulator, {name: key, checked: this.peers.includes(key)}];
         }, []);
 
-        inquirer.prompt([
+        return inquirer.prompt([
             {
                 type: 'checkbox1',
                 message: locale["checkbox.list.select"],
@@ -195,8 +201,10 @@ const Main = class Main {
         ])
             .then(answers => {
                 this.peers = answers.peers;
-                if(callback){
+                if(callback && typeof callback === "function"){
                     callback();
+                }else if(callback && typeof callback === "boolean") {
+                    return true;
                 }else{
                     this.showMainMenu();
                 }
@@ -204,47 +212,64 @@ const Main = class Main {
     }
 
     async askCloudantredentials(){
-        let questions = [
-            {
-                type: 'input',
-                name: 'user',
-                message: locale["questions.cloudant.user"],
-                validate: function(answer) {
-                    return answer && answer.length > 1 ? true:`${locale["messages.empty"]}`
+
+        if (fs.existsSync("./resources/cloudantProfile.json")) {
+            try {
+                this.cloudant = JSON.parse(fs.readFileSync("./resources/cloudantProfile.json", 'utf8'));
+                return this.cloudant;
+            } catch (e) {}
+        } else {
+            let questions = [
+                {
+                    type: 'input',
+                    name: 'user',
+                    message: locale["questions.cloudant.user"],
+                    validate: function (answer) {
+                        return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                    }
+                },
+                {
+                    type: 'input',
+                    name: 'password',
+                    message: locale["questions.cloudant.password"],
+                    validate: function (answer) {
+                        return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                    }
+                },
+                {
+                    type: 'input',
+                    name: 'host',
+                    message: locale["questions.cloudant.host"],
+                    validate: function (answer) {
+                        return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                    }
+                },
+                {
+                    type: 'input',
+                    name: 'database',
+                    message: locale["questions.cloudant.database"],
+                    validate: function (answer) {
+                        return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                    }
                 }
-            },
-            {
-                type: 'input',
-                name: 'password',
-                message: locale["questions.cloudant.password"],
-                validate: function(answer) {
-                    return answer && answer.length > 1 ? true:`${locale["messages.empty"]}`
-                }
-            },
-            {
-                type: 'input',
-                name: 'host',
-                message: locale["questions.cloudant.host"],
-                validate: function(answer) {
-                    return answer && answer.length > 1 ? true:`${locale["messages.empty"]}`
-                }
-            },
-            {
-                type: 'input',
-                name: 'database',
-                message: locale["questions.cloudant.database"],
-                validate: function(answer) {
-                    return answer && answer.length > 1 ? true:`${locale["messages.empty"]}`
-                }
-            }
-        ];
-        return await inquirer.prompt(questions).then(answers => {
-            this.cloudant = answers;
-            return answers;
-        });
+            ];
+            return inquirer.prompt(questions).then(answers => {
+                this.cloudant = answers;
+                fs.writeFile("./resources/cloudantProfile.json", JSON.stringify(answers), function (err) {
+                    if (err) {
+                        console.log(`\n${Logger.ERROR(locale["messages.noSave"] + " " + chalk.yellow("./resources/cloudantProfile.json"))}`);
+                        process.exit(1);
+                    }
+                    console.log(`\n${Logger.INFO(locale["messages.save"] + chalk.yellow("./resources/cloudantProfile.json"))}`);
+                    console.log(Logger.INFO(locale["messages.nextTime"] + "\n"));
+                });
+                return answers;
+            });
+        }
     }
 
     askCredentials(){
+        let parent = this;
         if(this.peers.length === 0){
             this.showPeersList(this.askCredentials);
         }else {
@@ -252,30 +277,193 @@ const Main = class Main {
                 {
                     type: 'input',
                     name: 'chaincode',
-                    message: locale["questions.chaincode"]
+                    message: locale["questions.chaincode"],
+                    default: function () {
+                        return parent.chaincode ? parent.chaincode:'fabcar';
+                    }
                 },
                 {
                     type: 'input',
                     name: 'channelID',
                     message: locale["questions.channelID"],
                     default: function () {
-                        return 'default';
+                        return parent.channelId ? parent.channelId:'scd-deviceid';
                     }
                 },
                 {
                     type: 'confirm',
                     name: 'peers',
-                    message: `${locale["questions.peers"]}: ${this.peers.join(",")}`,
+                    message: `${locale["questions.peers"]}: ${this.peers.join(",")}`
                 }
             ];
             inquirer.prompt(questions).then(answers => {
-                this.blockChainService.enrollAdmin();
-                console.log(JSON.stringify(answers, null, '  '));
+                this.chaincode = answers.chaincode;
+                this.channelId = answers.channelID;
+                if (answers.peers !== true)
+                    parent.showPeersList(false).then(() =>{
+                        this.blockChainService.enrollAdmin().then(() =>{
+                            this.user=false;
+                            this.showMainMenu();
+                        });
+                    });
+                else
+                    this.blockChainService.enrollAdmin().then(() =>{
+                        this.user=false;
+                        this.showMainMenu();
+                    });
             });
         }
-
-
     }
+
+    getUser(){
+        if (fs.existsSync("./resources/userProfile.json")) {
+            try {
+                this.username = JSON.parse(fs.readFileSync("./resources/userProfile.json", 'utf8')).username;
+                console.log('\n'+Logger.INFO( `Se a cargado el usuario ${this.username} de persistencia\n`));
+                this.trans=false;
+                this.showMainMenu();
+            } catch (e) {}
+        } else {
+            let questions = [
+                {
+                    type: 'input',
+                    name: 'username',
+                    message: locale["questions.user"],
+                    validate: function (answer) {
+                        return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                    }
+                },
+                {
+                    type: 'input',
+                    name: 'password',
+                    message: locale["questions.password"],
+                    validate: function (answer) {
+                        return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                    }
+                },
+                {
+                    type: 'input',
+                    name: 'affiliation',
+                    message: locale["questions.affiliation"],
+                    validate: function (answer) {
+                        return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                    }
+                },
+                {
+                    type: 'input',
+                    name: 'company',
+                    message: locale["questions.company"],
+                    validate: function (answer) {
+                        return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                    }
+                }
+            ];
+            inquirer.prompt(questions).then(answers => {
+                this.username = answers.username;
+                fs.writeFile("./resources/userProfile.json", JSON.stringify(answers), function (err) {
+                    if (err) {
+                        console.log(`\n${Logger.ERROR(locale["messages.noSave"] + " " + chalk.yellow("./resources/userProfile.json"))}`);
+                        process.exit(1);
+                    }
+                    console.log(`\n${Logger.INFO(locale["messages.save"] + chalk.yellow("./resources/userProfile.json"))}`);
+                    console.log(Logger.INFO(locale["messages.nextTime"] + "\n"));
+                });
+                return answers
+            }).then((answers) => {
+                return this.blockChainService.registerUser(answers.affiliation, answers.company, answers.username, answers.password);
+            }).then(()=>{
+                this.trans=false;
+                this.showMainMenu();
+            })
+        }
+    }
+
+    invokeTransaction(){
+
+        let questions = [
+            {
+                type: 'input',
+                name: 'vim',
+                message: "¿Cúal es la vim del coche?",
+                validate: function (answer) {
+                    return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                }
+            },
+            {
+                type: 'input',
+                name: 'marca',
+                message: "¿Cúal es la marca del coche?",
+                validate: function (answer) {
+                    return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                }
+            },
+            {
+                type: 'input',
+                name: 'modelo',
+                message: "¿Cúal es la modelo del coche?",
+                validate: function (answer) {
+                    return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                }
+            },
+            {
+                type: 'input',
+                name: 'color',
+                message: "¿Cúal es la color del coche?",
+                validate: function (answer) {
+                    return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                }
+            },
+            {
+                type: 'input',
+                name: 'dueno',
+                message: "¿Quién es el dueño del coche?",
+                validate: function (answer) {
+                    return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                }
+            }
+        ];
+        inquirer.prompt(questions).then((answers) => {
+            this.blockChainService.peersID(this.peers, this.channelId);
+            return this.blockChainService.addCar(this.chaincode, this.channelId, answers, this.username)
+        }).then((data)=>{
+
+            if(data.status === 200){
+                console.log('\n'+Logger.INFO(chalk.green(data.message))+'\n');
+            }else{
+                console.log('\n'+Logger.ERROR(data.message)+'\n');
+            }
+
+            this.showMainMenu();
+        })
+    }
+
+    queryTransaction(){
+
+        let questions = [
+            {
+                type: 'input',
+                name: 'vim',
+                message: "¿Cúal es la vim del coche?",
+                validate: function (answer) {
+                    return answer && answer.length > 1 ? true : `${locale["messages.empty"]}`
+                }
+            }
+        ];
+        inquirer.prompt(questions).then((answers) => {
+            this.blockChainService.peersID(this.peers, this.channelId);
+            return this.blockChainService.queryCar(this.chaincode, this.channelId, answers, this.username)
+        }).then((data)=>{
+
+            if(data.status === 200){
+                console.log('\n'+Logger.INFO(chalk.green(data.message)));
+                console.log('\n'+Logger.INFO(chalk.green(JSON.stringify(data.payload)))+'\n');
+            }else{
+                console.log('\n'+Logger.ERROR(data.message)+'\n');
+            }
+            this.showMainMenu();
+        })
+    }
+
 
     showMainMenu(){
         inquirer.prompt([
@@ -295,19 +483,19 @@ const Main = class Main {
                     },
                     {
                         name: "Crear Usuario",
-                        disabled: true,
+                        disabled: this.user,
                         value: "Primero hay que enrolar a un administrador",
                         key: 2
                     },
                     {
                         name: "Invovar una transacción",
-                        disabled: true,
+                        disabled: this.trans,
                         value: "Se necesita tener un usuario registrado, y peers asignados",
                         key: 3
                     },
                     {
                         name: "Hacer un query",
-                        disabled: true,
+                        disabled: this.trans,
                         value: "Se necesita tener un usuario registrado, y peers asignados",
                         key: 4
                     },
@@ -335,6 +523,15 @@ const Main = class Main {
                         break;
                     case 1:
                         this.askCredentials();
+                        break;
+                    case 2:
+                        this.getUser();
+                        break;
+                    case 3:
+                        this.invokeTransaction();
+                        break;
+                    case 4:
+                        this.queryTransaction();
                         break;
                     case 5:
                         clear();

@@ -10,6 +10,7 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "allowJs": true,
     "paths": {
       "*": [
         "node_modules/*",
